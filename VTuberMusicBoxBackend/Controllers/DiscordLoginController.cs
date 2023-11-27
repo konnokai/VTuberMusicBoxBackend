@@ -95,7 +95,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 string token = "";
                 try
                 {
-                    token = Auth.TokenManager.CreateToken(discordUser.Id);
+                    token = await Auth.TokenManager.CreateTokenAsync(discordUser.Id);
                 }
                 catch (Exception ex)
                 {
