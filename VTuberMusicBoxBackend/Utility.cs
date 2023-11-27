@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Net;
 using System.Text;
@@ -15,12 +16,6 @@ namespace VTuberMusicBoxBackend
         public static ServerConfig ServerConfig { get; set; } = new ServerConfig();
 
         private const string UnReservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
-        private static readonly Logger _logger;
-
-        static Utility()
-        {
-            _logger = LogManager.GetLogger("Utility");
-        }
 
         /// <summary>
         /// Url Encoding
@@ -58,12 +53,17 @@ namespace VTuberMusicBoxBackend
             {
                 // if you are allowing these forward headers, please ensure you are restricting context.Connection.RemoteIpAddress
                 // to cloud flare ips: https://www.cloudflare.com/ips/
-                string header = (context.Request.Headers["CF-Connecting-IP"].FirstOrDefault() ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault()).Split(',').FirstOrDefault();
+                string header = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault() ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+                if (header == null)
+                    return context.Connection.RemoteIpAddress;
+
+                header = header.Split(',')[0];
                 if (IPAddress.TryParse(header, out IPAddress ip))
                 {
                     return ip;
                 }
             }
+
             return context.Connection.RemoteIpAddress;
         }
     }
@@ -115,9 +115,12 @@ namespace VTuberMusicBoxBackend
             this.message = message;
         }
 
-#pragma warning disable IDE1006 // 命名樣式
+        public ContentResult ToContentResult()
+        {
+            return new ContentResult() { StatusCode = code, Content = JsonConvert.SerializeObject(this) };
+        }
+
         public int code { get; set; }
         public object message { get; set; }
-#pragma warning restore IDE1006 // 命名樣式
     }
 }

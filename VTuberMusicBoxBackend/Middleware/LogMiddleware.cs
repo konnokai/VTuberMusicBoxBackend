@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using NLog;
 using StackExchange.Redis;
+using System.Diagnostics;
 using System.Text;
 
 namespace VTuberMusicBoxBackend.Middleware
@@ -62,7 +63,7 @@ namespace VTuberMusicBoxBackend.Middleware
 
                 _logger.Info($"{remoteIpAddress} | {context.Request.Method} | {context.Response.StatusCode} | {requestUrl}");
 
-                if (!isRedisError)
+                if (!isRedisError && !Debugger.IsAttached)
                 {
                     if (context.Response.StatusCode >= 400 && context.Response.StatusCode < 500)
                     {
