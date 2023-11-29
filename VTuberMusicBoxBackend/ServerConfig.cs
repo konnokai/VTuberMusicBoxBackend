@@ -7,7 +7,7 @@ public class ServerConfig
 {
     public string DiscordClientId { get; set; } = "";
     public string DiscordClientSecret { get; set; } = "";
-    public string RedirectURI { get; set; } = "";
+    public string RedirectURI { get; set; } = "http://localhost";
     public string RedisOption { get; set; } = "127.0.0.1,syncTimeout=3000";
     public string TokenKey { get; set; } = "";
 
