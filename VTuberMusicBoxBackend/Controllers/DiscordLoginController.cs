@@ -1,28 +1,49 @@
-﻿using Microsoft.AspNetCore.Cors;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
+using VTuberMusicBoxBackend.Configs;
+using VTuberMusicBoxBackend.Models;
+using VTuberMusicBoxBackend.Models.DiscordOAuth;
 
 #nullable disable
 
 namespace VTuberMusicBoxBackend.Controllers
 {
-    [Route("[action]")]
+    [AllowAnonymous]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class DiscordLoginController : Controller
     {
         private readonly ILogger<DiscordLoginController> _logger;
         private readonly HttpClient _httpClient;
+        private readonly MainDbContext _mainContext;
+        private readonly DiscordConfig _discordConfig;
+        private readonly JwtConfig _jwtConfig;
 
-        public DiscordLoginController(ILogger<DiscordLoginController> logger, HttpClient httpClient)
+        public DiscordLoginController(ILogger<DiscordLoginController> logger,
+            HttpClient httpClient,
+            MainDbContext mainContext,
+            IOptions<DiscordConfig> discordConfig,
+            IOptions<JwtConfig> jwtConfig)
         {
             _logger = logger;
             _httpClient = httpClient;
+            _mainContext = mainContext;
+            _discordConfig = discordConfig.Value;
+            _jwtConfig = jwtConfig.Value;
         }
 
         [EnableCors("allowGET")]
         [HttpGet]
-        public async Task<ContentResult> DiscordCallBack(string code)
+        public async Task<ContentResult> GetToken(string code)
         {
             if (string.IsNullOrEmpty(code))
                 return new APIResult(ResultStatusCode.BadRequest, "參數錯誤").ToContentResult();
@@ -32,11 +53,11 @@ namespace VTuberMusicBoxBackend.Controllers
                 if (await Utility.RedisDb.KeyExistsAsync($"discord:code:{code}"))
                     return new APIResult(ResultStatusCode.BadRequest, "請確認是否有插件或軟體導致重複驗證\n如網頁正常顯示資料則無需理會").ToContentResult();
 
-                await Utility.RedisDb.StringSetAsync($"discord:code:{code}", "0", TimeSpan.FromHours(1));
+                await Utility.RedisDb.StringSetAsync($"discord:code:{code}", "0", TimeSpan.FromHours(3));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DiscordCallBack - Redis設定錯誤");
+                _logger.LogError(ex, "DiscordCallBack - Redis 設定錯誤\r\n");
                 return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
             }
 
@@ -48,9 +69,9 @@ namespace VTuberMusicBoxBackend.Controllers
                     var content = new FormUrlEncodedContent(new KeyValuePair<string, string>[]
                     {
                         new("code", code),
-                        new("client_id", Utility.ServerConfig.DiscordClientId),
-                        new("client_secret", Utility.ServerConfig.DiscordClientSecret),
-                        new("redirect_uri", Utility.ServerConfig.RedirectURI),
+                        new("client_id", _discordConfig.ClientId),
+                        new("client_secret", _discordConfig.ClientSecret),
+                        new("redirect_uri", _discordConfig.RedirectURI),
                         new("grant_type", "authorization_code")
                     });
                     content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
@@ -61,45 +82,51 @@ namespace VTuberMusicBoxBackend.Controllers
                     tokenData = JsonConvert.DeserializeObject<TokenData>(await response.Content.ReadAsStringAsync());
 
                     if (tokenData == null || tokenData.AccessToken == null)
-                        return new APIResult(ResultStatusCode.Unauthorized, "認證錯誤，請重新登入Discord").ToContentResult();
+                        return new APIResult(ResultStatusCode.Unauthorized, "認證錯誤，請重新登入 Discord").ToContentResult();
                 }
                 catch (Exception ex)
                 {
                     if (ex.Message.Contains("400"))
                     {
                         _logger.LogWarning("{ExceptionMessage}", ex.ToString());
-                        return new APIResult(ResultStatusCode.BadRequest, "請重新登入Discord").ToContentResult();
+                        return new APIResult(ResultStatusCode.BadRequest, "請重新登入 Discord").ToContentResult();
                     }
 
-                    _logger.LogError(ex, "DiscordCallBack - Discord Token交換錯誤");
+                    _logger.LogError(ex, "DiscordCallBack - Discord Token 交換錯誤\r\n");
                     return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
-                DiscordUser discordUser = null;
+                UserData discordUser = null;
                 try
                 {
                     _httpClient.DefaultRequestHeaders.Clear();
                     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue($"Bearer", tokenData.AccessToken);
 
                     var discordMeJson = await _httpClient.GetStringAsync("https://discord.com/api/v10/users/@me");
-                    discordUser = JsonConvert.DeserializeObject<DiscordUser>(discordMeJson);
+                    discordUser = JsonConvert.DeserializeObject<UserData>(discordMeJson);
 
                     _logger.LogInformation("Discord User OAuth Done: {DiscordUsername} ({DiscordUserid})", discordUser.Username, discordUser.Id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "DiscordCallBack - Discord API回傳錯誤");
+                    _logger.LogError(ex, "DiscordCallBack - Discord API 回傳錯誤\r\n");
                     return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
+                }
+
+                if (!await _mainContext.User.AsNoTracking().AnyAsync((x) => x.DiscordId == discordUser.Id))
+                {
+                    _mainContext.User.Add(new User() { DiscordId = discordUser.Id });
+                    await _mainContext.SaveChangesAsync();
                 }
 
                 string token = "";
                 try
                 {
-                    token = await Auth.TokenManager.CreateTokenAsync(discordUser.Id);
+                    token = GenerateJwtToken(discordUser.Id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogCritical(ex, "DiscordCallBack - 建立JWT錯誤");
+                    _logger.LogCritical(ex, "DiscordCallBack - 建立 JWT 錯誤\r\n");
                     return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
@@ -107,9 +134,46 @@ namespace VTuberMusicBoxBackend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(ex, "DiscordCallBack - 整體錯誤");
+                _logger.LogCritical(ex, "DiscordCallBack - 整體錯誤\r\n");
                 return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
             }
+        }
+
+        // https://medium.com/selectprogram/asp-net-core%E4%BD%BF%E7%94%A8jwt%E9%A9%97%E8%AD%89-1b0609e6e8e3
+        /// <summary>
+        /// 產生JWT Token
+        /// </summary>
+        /// <param name="user">User資料</param>
+        /// <returns>AuthResult</returns>
+        private string GenerateJwtToken(string discordUserId)
+        {
+            //appsettings中JwtConfig的Secret值
+            byte[] key = Encoding.ASCII.GetBytes(_jwtConfig.Secret);
+
+            //定義token描述
+            SecurityTokenDescriptor tokenDescriptor = new()
+            {
+                //設定要加入到 JWT Token 中的聲明資訊(Claims)
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, discordUserId),
+                }),
+
+                //設定Token的時效
+                Expires = DateTime.UtcNow.AddDays(3),
+
+                //設定加密方式，key(appsettings中JwtConfig的Secret值)與HMAC SHA512演算法
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
+            };
+
+            //宣告JwtSecurityTokenHandler，用來建立token
+            JwtSecurityTokenHandler jwtTokenHandler = new();
+
+            //使用SecurityTokenDescriptor建立JWT securityToken
+            SecurityToken token = jwtTokenHandler.CreateToken(tokenDescriptor);
+
+            //token序列化為字串
+            return jwtTokenHandler.WriteToken(token);
         }
     }
 }

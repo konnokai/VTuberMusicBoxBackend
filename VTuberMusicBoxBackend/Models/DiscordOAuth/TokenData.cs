@@ -2,7 +2,7 @@
 
 using Newtonsoft.Json;
 
-namespace VTuberMusicBoxBackend
+namespace VTuberMusicBoxBackend.Models.DiscordOAuth
 {
     public class TokenData
     {

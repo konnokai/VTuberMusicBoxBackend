@@ -35,25 +35,23 @@ namespace VTuberMusicBoxBackend.Middleware
                     {
                         await Utility.RedisDb.StringIncrementAsync(badReqRedisKey);
                         await Utility.RedisDb.KeyExpireAsync(badReqRedisKey, TimeSpan.FromHours(1));
-                        var errorMessage = JsonConvert.SerializeObject(new
-                        {
-                            ErrorMessage = "429 Too Many Requests"
-                        });
-                        var bytes = Encoding.UTF8.GetBytes(errorMessage);
 
-                        context.Response.StatusCode = 429;
-                        await originalResponseBodyStream.WriteAsync(bytes);
+                        var result = new APIResult(ResultStatusCode.TooManyRequests, "Too Many Requests");
+                        var messageBytes = Encoding.UTF8.GetBytes(result.ToJson());
+
+                        context.Response.StatusCode = result.Code;
+                        await context.Response.Body.WriteAsync(messageBytes);
                         return;
                     }
                 }
                 catch (RedisConnectionException redisEx)
                 {
-                    _logger.Error(redisEx, "Redis掛掉了");
+                    _logger.Error(redisEx, "Redis掛掉了\r\n");
                     isRedisError = true;
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Middleware錯誤");
+                    _logger.Error(ex, "Middleware錯誤\r\n");
                 }
 
                 await _next(context);
@@ -74,15 +72,13 @@ namespace VTuberMusicBoxBackend.Middleware
             }
             catch (Exception e)
             {
-                _logger.Error(e);
+                _logger.Error(e, "LogMiddleware Error");
 
-                var errorMessage = JsonConvert.SerializeObject(new
-                {
-                    ErrorMessage = e.Message
-                });
-                var bytes = Encoding.UTF8.GetBytes(errorMessage);
+                var result = new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤");
+                var messageBytes = Encoding.UTF8.GetBytes(result.ToJson());
 
-                await originalResponseBodyStream.WriteAsync(bytes);
+                context.Response.StatusCode = result.Code;
+                await context.Response.Body.WriteAsync(messageBytes);
             }
         }
     }

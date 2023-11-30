@@ -10,36 +10,8 @@ namespace VTuberMusicBoxBackend
 {
     public static class Utility
     {
-        public static List<string> NowRecordList { get; private set; } = new List<string>();
         public static ConnectionMultiplexer Redis { get; set; }
         public static IDatabase RedisDb { get; set; }
-        public static ServerConfig ServerConfig { get; set; } = new ServerConfig();
-
-        private const string UnReservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
-
-        /// <summary>
-        /// Url Encoding
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static string UrlEncode(string value)
-        {
-            StringBuilder result = new();
-
-            foreach (char symbol in value)
-            {
-                if (UnReservedChars.Contains(symbol))
-                {
-                    result.Append(symbol);
-                }
-                else
-                {
-                    result.Append('%' + String.Format("{0:X2}", (int)symbol));
-                }
-            }
-
-            return result.ToString();
-        }
 
         /// <summary>
         /// Get remote ip address, optionally allowing for x-forwarded-for header check
@@ -111,16 +83,22 @@ namespace VTuberMusicBoxBackend
         /// <param name="message">Object訊息</param>
         public APIResult(ResultStatusCode code, object message = null)
         {
-            this.code = (int)code;
-            this.message = message;
+            Code = (int)code;
+            Message = message;
         }
 
         public ContentResult ToContentResult()
         {
-            return new ContentResult() { StatusCode = code, Content = JsonConvert.SerializeObject(this) };
+            return new ContentResult() { StatusCode = Code, Content = JsonConvert.SerializeObject(this) };
         }
 
-        public int code { get; set; }
-        public object message { get; set; }
+        public string ToJson()
+            => JsonConvert.SerializeObject(this);
+
+        [JsonProperty("code")]
+        public int Code { get; set; }
+
+        [JsonProperty("message")]
+        public object Message { get; set; }
     }
 }

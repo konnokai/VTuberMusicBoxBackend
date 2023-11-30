@@ -8,43 +8,27 @@ namespace VTuberMusicBoxBackend
 {
     public class Program
     {
-        public static string VERSION => GetLinkerTime(Assembly.GetEntryAssembly());
+        public static string Version { get => GetLinkerTime(Assembly.GetEntryAssembly()); }
+
+        private static readonly Logger _logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+
         public static void Main(string[] args)
         {
-            var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
             try
             {
-                logger.Debug("init main");
-                Utility.ServerConfig.InitServerConfig();
-                logger.Info(VERSION + " 初始化中");
-
-                try
-                {
-                    RedisConnection.Init(Utility.ServerConfig.RedisOption);
-                    Utility.Redis = RedisConnection.Instance.ConnectionMultiplexer;
-                    Utility.RedisDb = Utility.Redis.GetDatabase(2);
-
-                    logger.Info("Redis已連線");
-                }
-                catch (Exception exception)
-                {
-                    logger.Error(exception, "Redis連線錯誤，請確認伺服器是否已開啟\r\n");
-                    return;
-                }
-
+                _logger.Info($"{Version} 初始化...");
                 CreateHostBuilder(args).Build().Run();
             }
             catch (Exception exception)
             {
                 //NLog: catch setup errors
-                logger.Error(exception, "Stopped program because of exception\r\n");
+                _logger.Error(exception, "Stopped program because of exception\r\n");
                 throw;
             }
             finally
             {
                 // Ensure to flush and stop internal timers/threads before application-exit (Avoid segmentation fault on Linux)
                 LogManager.Shutdown();
-                Utility.Redis.Dispose();
             }
         }
 
