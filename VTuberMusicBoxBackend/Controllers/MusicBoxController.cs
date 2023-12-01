@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VTuberMusicBoxBackend.Models;
 
@@ -24,7 +25,15 @@ namespace VTuberMusicBoxBackend.Controllers
         {
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            return new APIResult(ResultStatusCode.OK, discordUserId).ToContentResult();
+            var userData = await _mainContext.User.AsNoTracking().SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
+
+            return new APIResult(ResultStatusCode.OK,
+                new
+                {
+                    track_list = userData?.TrackList,
+                    categorie_list = userData?.CategorieList,
+                    favorite_track_list = userData?.FavoriteTrackList
+                }).ToContentResult();
         }
     }
 }
