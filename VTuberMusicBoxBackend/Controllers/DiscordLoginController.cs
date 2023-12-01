@@ -20,15 +20,15 @@ namespace VTuberMusicBoxBackend.Controllers
     [AllowAnonymous]
     [Route("[controller]/[action]")]
     [ApiController]
-    public class DiscordLoginController : Controller
+    public class DiscordController : Controller
     {
-        private readonly ILogger<DiscordLoginController> _logger;
+        private readonly ILogger<DiscordController> _logger;
         private readonly HttpClient _httpClient;
         private readonly MainDbContext _mainContext;
         private readonly DiscordConfig _discordConfig;
         private readonly JwtConfig _jwtConfig;
 
-        public DiscordLoginController(ILogger<DiscordLoginController> logger,
+        public DiscordController(ILogger<DiscordController> logger,
             HttpClient httpClient,
             MainDbContext mainContext,
             IOptions<DiscordConfig> discordConfig,
@@ -57,7 +57,7 @@ namespace VTuberMusicBoxBackend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DiscordCallBack - Redis 設定錯誤\r\n");
+                _logger.LogError(ex, "DiscordGetToken - Redis 設定錯誤\r\n");
                 return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
             }
 
@@ -92,7 +92,7 @@ namespace VTuberMusicBoxBackend.Controllers
                         return new APIResult(ResultStatusCode.BadRequest, "請重新登入 Discord").ToContentResult();
                     }
 
-                    _logger.LogError(ex, "DiscordCallBack - Discord Token 交換錯誤\r\n");
+                    _logger.LogError(ex, "DiscordGetToken - Discord Token 交換錯誤\r\n");
                     return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
@@ -109,7 +109,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "DiscordCallBack - Discord API 回傳錯誤\r\n");
+                    _logger.LogError(ex, "DiscordGetToken - Discord API 回傳錯誤\r\n");
                     return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
@@ -126,7 +126,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogCritical(ex, "DiscordCallBack - 建立 JWT 錯誤\r\n");
+                    _logger.LogCritical(ex, "DiscordGetToken - 建立 JWT 錯誤\r\n");
                     return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
@@ -134,7 +134,7 @@ namespace VTuberMusicBoxBackend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(ex, "DiscordCallBack - 整體錯誤\r\n");
+                _logger.LogCritical(ex, "DiscordGetToken - 整體錯誤\r\n");
                 return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
             }
         }
