@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -21,7 +22,7 @@ namespace VTuberMusicBoxBackend.Migrations
                     DiscordId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     DateAdded = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    LikedMusicList = table.Column<string>(type: "longtext", nullable: false)
+                    FavoriteTrackList = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -56,7 +57,7 @@ namespace VTuberMusicBoxBackend.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Music",
+                name: "Track",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -72,9 +73,9 @@ namespace VTuberMusicBoxBackend.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Music", x => x.Id);
+                    table.PrimaryKey("PK_Track", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Music_User_UserDiscordId",
+                        name: "FK_Track_User_UserDiscordId",
                         column: x => x.UserDiscordId,
                         principalTable: "User",
                         principalColumn: "DiscordId");
@@ -87,8 +88,8 @@ namespace VTuberMusicBoxBackend.Migrations
                 column: "UserDiscordId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Music_UserDiscordId",
-                table: "Music",
+                name: "IX_Track_UserDiscordId",
+                table: "Track",
                 column: "UserDiscordId");
         }
 
@@ -99,7 +100,7 @@ namespace VTuberMusicBoxBackend.Migrations
                 name: "Category");
 
             migrationBuilder.DropTable(
-                name: "Music");
+                name: "Track");
 
             migrationBuilder.DropTable(
                 name: "User");

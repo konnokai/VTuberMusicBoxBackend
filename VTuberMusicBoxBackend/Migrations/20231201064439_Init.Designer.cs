@@ -11,7 +11,7 @@ using VTuberMusicBoxBackend.Models;
 namespace VTuberMusicBoxBackend.Migrations
 {
     [DbContext(typeof(MainDbContext))]
-    [Migration("20231130061747_Init")]
+    [Migration("20231201064439_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -49,7 +49,7 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.ToTable("Category");
                 });
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Music", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Track", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -78,7 +78,7 @@ namespace VTuberMusicBoxBackend.Migrations
 
                     b.HasIndex("UserDiscordId");
 
-                    b.ToTable("Music");
+                    b.ToTable("Track");
                 });
 
             modelBuilder.Entity("VTuberMusicBoxBackend.Models.User", b =>
@@ -89,7 +89,7 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("LikedMusicList")
+                    b.Property<string>("FavoriteTrackList")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -105,10 +105,10 @@ namespace VTuberMusicBoxBackend.Migrations
                         .HasForeignKey("UserDiscordId");
                 });
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Music", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Track", b =>
                 {
                     b.HasOne("VTuberMusicBoxBackend.Models.User", null)
-                        .WithMany("MusicList")
+                        .WithMany("TrackList")
                         .HasForeignKey("UserDiscordId");
                 });
 
@@ -116,7 +116,7 @@ namespace VTuberMusicBoxBackend.Migrations
                 {
                     b.Navigation("CategorieList");
 
-                    b.Navigation("MusicList");
+                    b.Navigation("TrackList");
                 });
 #pragma warning restore 612, 618
         }

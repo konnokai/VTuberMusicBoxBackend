@@ -29,7 +29,7 @@ namespace VTuberMusicBoxBackend.Models
             // https://www.conradakunga.com/blog/saving-collections-of-primitives-in-entity-framework-core/
             // Configure the value converter for the List<string>
             modelBuilder.Entity<User>()
-                .Property(x => x.LikedMusicList)
+                .Property(x => x.FavoriteTrackList)
                 .HasConversion(new ValueConverter<List<string>, string>(
                     v => JsonConvert.SerializeObject(v), // Convert to string for persistence
                     v => JsonConvert.DeserializeObject<List<string>>(v)!)) // Convert to List<String> for use
