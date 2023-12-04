@@ -47,7 +47,7 @@ namespace VTuberMusicBoxBackend
             services.Configure<JwtConfig>(Configuration.GetSection(nameof(JwtConfig)));
 
             //³]©wkey
-            var key = Encoding.ASCII.GetBytes(Configuration.GetValue<string>($"{nameof(JwtConfig)}:Secret"));
+            var key = Encoding.ASCII.GetBytes(Configuration.GetValue<string>($"{nameof(JwtConfig)}:{nameof(JwtConfig.Secret)}"));
 
             TokenValidationParameters tokenValidationParams = new()
             {
@@ -93,7 +93,7 @@ namespace VTuberMusicBoxBackend
 
             services.Configure<DiscordConfig>(Configuration.GetSection(nameof(DiscordConfig)));
 
-            var hostUri = new Uri(Configuration.GetValue<string>($"{nameof(DiscordConfig)}:RedirectURI"));
+            var hostUri = new Uri(Configuration.GetValue<string>($"{nameof(DiscordConfig)}:{nameof(DiscordConfig.RedirectURI)}"));
             services.AddCors(options =>
             {
                 options.AddPolicy(name: "allowGET", builder =>

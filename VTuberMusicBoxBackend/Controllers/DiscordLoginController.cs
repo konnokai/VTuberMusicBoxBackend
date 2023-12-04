@@ -141,10 +141,10 @@ namespace VTuberMusicBoxBackend.Controllers
 
         // https://medium.com/selectprogram/asp-net-core%E4%BD%BF%E7%94%A8jwt%E9%A9%97%E8%AD%89-1b0609e6e8e3
         /// <summary>
-        /// 產生JWT Token
+        /// 產生 JWT Token
         /// </summary>
-        /// <param name="user">User資料</param>
-        /// <returns>AuthResult</returns>
+        /// <param name="discordUserId">Discord User Id</param>
+        /// <returns>JWT Token</returns>
         private string GenerateJwtToken(string discordUserId)
         {
             //appsettings中JwtConfig的Secret值
