@@ -34,6 +34,10 @@ namespace VTuberMusicBoxBackend.Controllers
                 .AsSplitQuery()
                 .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
 
+            // 原則上不會發生但還是寫一下保險
+            if (userData == null)
+                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
+
             return new APIResult(HttpStatusCode.OK,
                 new
                 {
