@@ -6,11 +6,12 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using VTuberMusicBoxBackend.Configs;
-using VTuberMusicBoxBackend.Models;
+using VTuberMusicBoxBackend.Models.Database;
 using VTuberMusicBoxBackend.Models.DiscordOAuth;
 
 #nullable disable
@@ -46,19 +47,19 @@ namespace VTuberMusicBoxBackend.Controllers
         public async Task<ContentResult> GetToken(string code)
         {
             if (string.IsNullOrEmpty(code))
-                return new APIResult(ResultStatusCode.BadRequest, "參數錯誤").ToContentResult();
+                return new APIResult(HttpStatusCode.BadRequest, "參數錯誤").ToContentResult();
 
             try
             {
                 if (await Utility.RedisDb.KeyExistsAsync($"discord:code:{code}"))
-                    return new APIResult(ResultStatusCode.BadRequest, "請確認是否有插件或軟體導致重複驗證\n如網頁正常顯示資料則無需理會").ToContentResult();
+                    return new APIResult(HttpStatusCode.BadRequest, "請確認是否有插件或軟體導致重複驗證\n如網頁正常顯示資料則無需理會").ToContentResult();
 
                 await Utility.RedisDb.StringSetAsync($"discord:code:{code}", "0", TimeSpan.FromHours(3));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "DiscordGetToken - Redis 設定錯誤\r\n");
-                return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
+                return new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
             }
 
             try
@@ -82,17 +83,17 @@ namespace VTuberMusicBoxBackend.Controllers
                     tokenData = JsonConvert.DeserializeObject<TokenData>(await response.Content.ReadAsStringAsync());
 
                     if (tokenData == null || tokenData.AccessToken == null)
-                        return new APIResult(ResultStatusCode.Unauthorized, "認證錯誤，請重新登入 Discord").ToContentResult();
+                        return new APIResult(HttpStatusCode.Unauthorized, "認證錯誤，請重新登入 Discord").ToContentResult();
                 }
                 catch (HttpRequestException httpEx) when (httpEx.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 {
                     _logger.LogWarning("Discord Token 交換失敗: {Code}", code);
-                    return new APIResult(ResultStatusCode.BadRequest, "請重新登入 Discord").ToContentResult();
+                    return new APIResult(HttpStatusCode.BadRequest, "請重新登入 Discord").ToContentResult();
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "DiscordGetToken - Discord Token 交換錯誤\r\n");
-                    return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
+                    return new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
                 UserData discordUser = null;
@@ -109,7 +110,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "DiscordGetToken - Discord API 回傳錯誤\r\n");
-                    return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
+                    return new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
                 if (!await _mainContext.User.AsNoTracking().AnyAsync((x) => x.DiscordId == discordUser.Id))
@@ -126,15 +127,15 @@ namespace VTuberMusicBoxBackend.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogCritical(ex, "DiscordGetToken - 建立 JWT 錯誤\r\n");
-                    return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
+                    return new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
-                return new APIResult(ResultStatusCode.OK, new { token, discord_data = discordUser }).ToContentResult();
+                return new APIResult(HttpStatusCode.OK, new { token, discord_data = discordUser }).ToContentResult();
             }
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, "DiscordGetToken - 整體錯誤\r\n");
-                return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
+                return new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
             }
         }
 

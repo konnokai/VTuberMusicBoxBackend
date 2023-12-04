@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Net;
-using System.Text;
 
 #nullable disable
 
@@ -41,37 +40,6 @@ namespace VTuberMusicBoxBackend
     }
 
     /// <summary>
-    /// API回傳狀態碼
-    /// </summary>
-    public enum ResultStatusCode
-    {
-        /// <summary>
-        /// 成功
-        /// </summary>
-        OK = 200,
-        /// <summary>
-        /// 已新增
-        /// </summary>
-        Created = 201,
-        /// <summary>
-        /// 錯誤的請求
-        /// </summary>
-        BadRequest = 400,
-        /// <summary>
-        /// 使用者未驗證
-        /// </summary>
-        Unauthorized = 401,
-        /// <summary>
-        /// 請求太多次
-        /// </summary>
-        TooManyRequests = 429,
-        /// <summary>
-        /// 伺服器內部錯誤
-        /// </summary>
-        InternalServerError = 500
-    }
-
-    /// <summary>
     /// API回傳物件
     /// </summary>
     public class APIResult
@@ -81,7 +49,7 @@ namespace VTuberMusicBoxBackend
         /// </summary>
         /// <param name="code">回傳狀態碼</param>
         /// <param name="message">Object訊息</param>
-        public APIResult(ResultStatusCode code, object message = null)
+        public APIResult(HttpStatusCode code, object message = null)
         {
             Code = (int)code;
             Message = message;

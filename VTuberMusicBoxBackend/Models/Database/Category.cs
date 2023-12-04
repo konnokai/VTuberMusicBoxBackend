@@ -1,4 +1,4 @@
-﻿namespace VTuberMusicBoxBackend.Models
+﻿namespace VTuberMusicBoxBackend.Models.Database
 {
     public class Category : DbEntity
     {

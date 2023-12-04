@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 #nullable disable
 
-namespace VTuberMusicBoxBackend.Models
+namespace VTuberMusicBoxBackend.Models.Database
 {
     public class MainDbContext : DbContext
     {

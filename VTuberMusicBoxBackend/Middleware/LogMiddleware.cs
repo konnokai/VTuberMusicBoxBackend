@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http.Extensions;
-using Newtonsoft.Json;
 using NLog;
 using StackExchange.Redis;
 using System.Diagnostics;
+using System.Net;
 using System.Text;
 
 namespace VTuberMusicBoxBackend.Middleware
@@ -36,7 +36,7 @@ namespace VTuberMusicBoxBackend.Middleware
                         await Utility.RedisDb.StringIncrementAsync(badReqRedisKey);
                         await Utility.RedisDb.KeyExpireAsync(badReqRedisKey, TimeSpan.FromHours(1));
 
-                        var result = new APIResult(ResultStatusCode.TooManyRequests, "Too Many Requests");
+                        var result = new APIResult(HttpStatusCode.TooManyRequests, "Too Many Requests");
                         var messageBytes = Encoding.UTF8.GetBytes(result.ToJson());
 
                         context.Response.StatusCode = result.Code;
@@ -74,7 +74,7 @@ namespace VTuberMusicBoxBackend.Middleware
             {
                 _logger.Error(e, "LogMiddleware Error");
 
-                var result = new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤");
+                var result = new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤");
                 var messageBytes = Encoding.UTF8.GetBytes(result.ToJson());
 
                 context.Response.StatusCode = result.Code;
