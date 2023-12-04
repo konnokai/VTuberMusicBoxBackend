@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using System.Text;
 using VTuberMusicBoxBackend.Configs;
-using VTuberMusicBoxBackend.Models;
+using VTuberMusicBoxBackend.Models.Database;
 
 namespace VTuberMusicBoxBackend
 {

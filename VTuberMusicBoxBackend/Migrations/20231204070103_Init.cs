@@ -66,7 +66,6 @@ namespace VTuberMusicBoxBackend.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     StartAt = table.Column<ushort>(type: "smallint unsigned", nullable: false),
                     EndAt = table.Column<ushort>(type: "smallint unsigned", nullable: false),
-                    IsLike = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     UserDiscordId = table.Column<string>(type: "varchar(255)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     DateAdded = table.Column<DateTime>(type: "datetime(6)", nullable: true)

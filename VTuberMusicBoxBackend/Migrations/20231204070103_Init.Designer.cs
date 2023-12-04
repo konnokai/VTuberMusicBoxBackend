@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using VTuberMusicBoxBackend.Models;
+using VTuberMusicBoxBackend.Models.Database;
 
 #nullable disable
 
 namespace VTuberMusicBoxBackend.Migrations
 {
     [DbContext(typeof(MainDbContext))]
-    [Migration("20231201064439_Init")]
+    [Migration("20231204070103_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -22,7 +22,7 @@ namespace VTuberMusicBoxBackend.Migrations
                 .HasAnnotation("ProductVersion", "7.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Category", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -49,7 +49,7 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.ToTable("Category");
                 });
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Track", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.Track", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -60,9 +60,6 @@ namespace VTuberMusicBoxBackend.Migrations
 
                     b.Property<ushort>("EndAt")
                         .HasColumnType("smallint unsigned");
-
-                    b.Property<bool>("IsLike")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<ushort>("StartAt")
                         .HasColumnType("smallint unsigned");
@@ -81,7 +78,7 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.ToTable("Track");
                 });
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.User", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.User", b =>
                 {
                     b.Property<string>("DiscordId")
                         .HasColumnType("varchar(255)");
@@ -98,21 +95,21 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.ToTable("User");
                 });
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Category", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.Category", b =>
                 {
-                    b.HasOne("VTuberMusicBoxBackend.Models.User", null)
+                    b.HasOne("VTuberMusicBoxBackend.Models.Database.User", null)
                         .WithMany("CategorieList")
                         .HasForeignKey("UserDiscordId");
                 });
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Track", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.Track", b =>
                 {
-                    b.HasOne("VTuberMusicBoxBackend.Models.User", null)
+                    b.HasOne("VTuberMusicBoxBackend.Models.Database.User", null)
                         .WithMany("TrackList")
                         .HasForeignKey("UserDiscordId");
                 });
 
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.User", b =>
+            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.User", b =>
                 {
                     b.Navigation("CategorieList");
 
