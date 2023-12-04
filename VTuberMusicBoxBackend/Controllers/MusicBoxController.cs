@@ -57,7 +57,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
 
             if (userData == null)
-                return new APIResult(HttpStatusCode.BadGateway, "無此使用者資料，請重新登入").ToContentResult();
+                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
 
             var resultCode = HttpStatusCode.Created;
             var userTrack = userData.TrackList.SingleOrDefault((x) => x.VideoId == track.VideoId);
