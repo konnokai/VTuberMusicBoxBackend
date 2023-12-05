@@ -33,7 +33,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 .Include((x) => x.CategorieList)
                 .AsNoTracking()
                 .AsSplitQuery() // 不確定這兩行會不會提升 SQL 執行速度 :thinking:
-                .Select((x) => new { x.DiscordId, x.TrackList, x.CategorieList, x.FavoriteTrackList })
+                .Select((x) => new { x.DiscordId, x.TrackList, x.CategorieList })
                 .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
 
             // 原則上不會發生但還是寫一下保險
@@ -44,8 +44,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 new
                 {
                     track_list = userData?.TrackList,
-                    categorie_list = userData?.CategorieList,
-                    favorite_track_list = userData?.FavoriteTrackList
+                    categorie_list = userData?.CategorieList
                 }).ToContentResult();
         }
 
@@ -53,8 +52,8 @@ namespace VTuberMusicBoxBackend.Controllers
         [EnableCors("allowPOST")]
         public async Task<ContentResult> AddTrack([FromBody] AddTrack track)
         {
-            if (track.StartAt >= track.EndAt)
-                return new APIResult(HttpStatusCode.BadRequest, "開始時間不可大於等於結束時間").ToContentResult();
+            if (track.StartAt > track.EndAt)
+                return new APIResult(HttpStatusCode.BadRequest, "開始時間不可大於結束時間").ToContentResult();
 
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -82,6 +81,35 @@ namespace VTuberMusicBoxBackend.Controllers
             await _mainContext.SaveChangesAsync();
 
             return new APIResult(resultCode).ToContentResult();
+        }
+
+        [HttpPost]
+        [EnableCors("allowPOST")]
+        public async Task<ContentResult> AddCategorie([FromBody] AddCategorie categorie)
+        {
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var userData = await _mainContext.User
+                .Include((x) => x.CategorieList)
+                .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
+
+            if (userData == null)
+                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
+
+            Category result;
+            var userTrack = userData.CategorieList.SingleOrDefault((x) => x.Name == categorie.Name);
+            if (userTrack == null)
+            {
+                result = new Category() { Name = categorie.Name, Position = categorie.Position };
+                userData.CategorieList.Add(result);
+                await _mainContext.SaveChangesAsync();
+            }
+            else
+            {
+                return new APIResult(HttpStatusCode.BadRequest, "已存在同名分類").ToContentResult();
+            }
+
+            return new APIResult(HttpStatusCode.Created, result).ToContentResult();
         }
     }
 }

@@ -21,9 +21,7 @@ namespace VTuberMusicBoxBackend.Migrations
                 {
                     DiscordId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    DateAdded = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    FavoriteTrackList = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    DateAdded = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -37,8 +35,11 @@ namespace VTuberMusicBoxBackend.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Guid = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Name = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    Position = table.Column<ushort>(type: "smallint unsigned", nullable: false),
                     VideoIdList = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     UserDiscordId = table.Column<string>(type: "varchar(255)", nullable: true)

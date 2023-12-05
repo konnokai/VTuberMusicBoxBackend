@@ -28,9 +28,16 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<ushort>("Position")
+                        .HasColumnType("smallint unsigned");
 
                     b.Property<string>("UserDiscordId")
                         .HasColumnType("varchar(255)");
@@ -82,10 +89,6 @@ namespace VTuberMusicBoxBackend.Migrations
 
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("FavoriteTrackList")
-                        .IsRequired()
-                        .HasColumnType("longtext");
 
                     b.HasKey("DiscordId");
 

@@ -11,7 +11,7 @@ using VTuberMusicBoxBackend.Models.Database;
 namespace VTuberMusicBoxBackend.Migrations
 {
     [DbContext(typeof(MainDbContext))]
-    [Migration("20231204070103_Init")]
+    [Migration("20231205024238_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -31,9 +31,16 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<ushort>("Position")
+                        .HasColumnType("smallint unsigned");
 
                     b.Property<string>("UserDiscordId")
                         .HasColumnType("varchar(255)");
@@ -85,10 +92,6 @@ namespace VTuberMusicBoxBackend.Migrations
 
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("FavoriteTrackList")
-                        .IsRequired()
-                        .HasColumnType("longtext");
 
                     b.HasKey("DiscordId");
 
