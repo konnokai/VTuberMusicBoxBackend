@@ -160,7 +160,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 }),
 
                 //設定Token的時效
-                Expires = DateTime.UtcNow.AddDays(3),
+                Expires = DateTime.UtcNow.AddDays(7),
 
                 //設定加密方式，key(appsettings中JwtConfig的Secret值)與HMAC SHA512演算法
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)

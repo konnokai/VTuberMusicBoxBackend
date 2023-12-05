@@ -27,11 +27,13 @@ namespace VTuberMusicBoxBackend.Controllers
         {
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            // https://learn.microsoft.com/zh-tw/ef/core/querying/single-split-queries
             var userData = await _mainContext.User
                 .Include((x) => x.TrackList)
                 .Include((x) => x.CategorieList)
                 .AsNoTracking()
-                .AsSplitQuery()
+                .AsSplitQuery() // 不確定這兩行會不會提升 SQL 執行速度 :thinking:
+                .Select((x) => new { x.DiscordId, x.TrackList, x.CategorieList, x.FavoriteTrackList })
                 .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
 
             // 原則上不會發生但還是寫一下保險
@@ -74,7 +76,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 userTrack.StartAt = track.StartAt;
                 userTrack.EndAt = track.EndAt;
                 _mainContext.User.Update(userData);
-                resultCode = HttpStatusCode.OK;
+                resultCode = HttpStatusCode.NoContent;
             }
 
             await _mainContext.SaveChangesAsync();

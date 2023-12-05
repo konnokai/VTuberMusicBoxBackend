@@ -46,17 +46,19 @@ namespace VTuberMusicBoxBackend.Middleware
                 }
                 catch (RedisConnectionException redisEx)
                 {
-                    _logger.Error(redisEx, "Redis掛掉了\r\n");
+                    _logger.Error(redisEx, "Redis 掛掉了\r\n");
                     isRedisError = true;
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Middleware錯誤\r\n");
+                    _logger.Error(ex, "Middleware 請求錯誤\r\n");
                 }
 
                 await _next(context);
 
-                if (requestUrl.EndsWith("statuscheck") && context.Response.StatusCode == 200)
+                // Generate from ChatGPT
+                var route = context.GetRouteValue("action")?.ToString()?.ToLower();
+                if (route != null && route == "statuscheck" && context.Response.StatusCode == 200)
                     return;
 
                 _logger.Info($"{remoteIpAddress} | {context.Request.Method} | {context.Response.StatusCode} | {requestUrl}");
@@ -72,7 +74,7 @@ namespace VTuberMusicBoxBackend.Middleware
             }
             catch (Exception e)
             {
-                _logger.Error(e, "LogMiddleware Error");
+                _logger.Error(e, "LogMiddleware Error\r\n");
 
                 var result = new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤");
                 var messageBytes = Encoding.UTF8.GetBytes(result.ToJson());
