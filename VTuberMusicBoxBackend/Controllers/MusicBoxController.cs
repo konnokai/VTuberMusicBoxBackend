@@ -124,7 +124,8 @@ namespace VTuberMusicBoxBackend.Controllers
 
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // ChatGPT: 可以考慮使用 AsNoTracking 來取消追蹤，然後再重新 Update 實體。這樣可以確保 EF Core 不會追蹤這些實體，並且在更新時直接將它們視為修改的實體。
+            // ChatGPT: 可以考慮使用 AsNoTracking 來取消追蹤，然後再重新 Update 實體。
+            // 這樣可以確保 EF Core 不會追蹤這些實體，並且在更新時直接將它們視為修改的實體。
             var userData = await _mainContext.User
                 .AsNoTracking()
                 .Include((x) => x.CategorieList)
@@ -138,16 +139,11 @@ namespace VTuberMusicBoxBackend.Controllers
                 return new APIResult(HttpStatusCode.BadRequest, "查無分類").ToContentResult();
 
             if (userCategory.VideoIdList.ContainsKey(setTrackCategorie.VideoId))
-            {
                 userCategory.VideoIdList[setTrackCategorie.VideoId] = setTrackCategorie.Position;
-            }
             else
-            {
                 userCategory.VideoIdList.Add(setTrackCategorie.VideoId, setTrackCategorie.Position);
-            }
 
             _mainContext.User.Update(userData);
-
             await _mainContext.SaveChangesAsync();
 
             return new APIResult(HttpStatusCode.OK, userCategory).ToContentResult();
