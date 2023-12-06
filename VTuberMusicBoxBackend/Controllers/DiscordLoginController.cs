@@ -115,7 +115,7 @@ namespace VTuberMusicBoxBackend.Controllers
 
                 if (!await _mainContext.User.AsNoTracking().AnyAsync((x) => x.DiscordId == discordUser.Id))
                 {
-                    _mainContext.User.Add(new User() { DiscordId = discordUser.Id, CategorieList = new List<Category>() { new() { Name = "FavoriteTrack", Position = 0 } } });                    
+                    _mainContext.User.Add(new User() { DiscordId = discordUser.Id, CategorieList = new List<Category>() { new() { Name = "FavoriteTrack", Position = 0 } } });
                     await _mainContext.SaveChangesAsync();
                 }
 

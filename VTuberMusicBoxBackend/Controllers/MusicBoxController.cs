@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using System.Net;
 using System.Security.Claims;
 using VTuberMusicBoxBackend.Models.Database;

@@ -60,7 +60,7 @@ namespace VTuberMusicBoxBackend
             // 204 不能回傳內容
             if (Code == (int)HttpStatusCode.NoContent)
                 return new ContentResult() { StatusCode = Code };
-            
+
             return new ContentResult() { StatusCode = Code, Content = JsonConvert.SerializeObject(this) };
         }
 
