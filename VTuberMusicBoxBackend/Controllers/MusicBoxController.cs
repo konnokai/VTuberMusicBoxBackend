@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Net;
 using System.Security.Claims;
 using VTuberMusicBoxBackend.Models.Database;
@@ -15,10 +16,12 @@ namespace VTuberMusicBoxBackend.Controllers
     public class MusicBoxController : Controller
     {
         private readonly MainDbContext _mainContext;
+        private readonly ILogger<MusicBoxController> _logger;
 
-        public MusicBoxController(MainDbContext mainContext)
+        public MusicBoxController(MainDbContext mainContext, ILogger<MusicBoxController> logger)
         {
             _mainContext = mainContext;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -97,8 +100,8 @@ namespace VTuberMusicBoxBackend.Controllers
                 return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
 
             Category result;
-            var userTrack = userData.CategorieList.SingleOrDefault((x) => x.Name == categorie.Name);
-            if (userTrack == null)
+            var userCategory = userData.CategorieList.SingleOrDefault((x) => x.Name == categorie.Name);
+            if (userCategory == null)
             {
                 result = new Category() { Name = categorie.Name, Position = categorie.Position };
                 userData.CategorieList.Add(result);
@@ -110,6 +113,45 @@ namespace VTuberMusicBoxBackend.Controllers
             }
 
             return new APIResult(HttpStatusCode.Created, result).ToContentResult();
+        }
+
+
+        [HttpPost]
+        [EnableCors("allowPOST")]
+        public async Task<ContentResult> SetTrackCategorie([FromBody] SetTrackCategorie setTrackCategorie)
+        {
+            if (setTrackCategorie.Position <= 0)
+                return new APIResult(HttpStatusCode.BadRequest, "Position 不可小於等於0").ToContentResult();
+
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // ChatGPT: 可以考慮使用 AsNoTracking 來取消追蹤，然後再重新 Update 實體。這樣可以確保 EF Core 不會追蹤這些實體，並且在更新時直接將它們視為修改的實體。
+            var userData = await _mainContext.User
+                .AsNoTracking()
+                .Include((x) => x.CategorieList)
+                .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
+
+            if (userData == null)
+                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
+
+            var userCategory = userData.CategorieList.SingleOrDefault((x) => x.Guid == setTrackCategorie.CategorieGuId);
+            if (userCategory == null)
+                return new APIResult(HttpStatusCode.BadRequest, "查無分類").ToContentResult();
+
+            if (userCategory.VideoIdList.ContainsKey(setTrackCategorie.VideoId))
+            {
+                userCategory.VideoIdList[setTrackCategorie.VideoId] = setTrackCategorie.Position;
+            }
+            else
+            {
+                userCategory.VideoIdList.Add(setTrackCategorie.VideoId, setTrackCategorie.Position);
+            }
+
+            _mainContext.User.Update(userData);
+
+            await _mainContext.SaveChangesAsync();
+
+            return new APIResult(HttpStatusCode.OK, userCategory).ToContentResult();
         }
     }
 }

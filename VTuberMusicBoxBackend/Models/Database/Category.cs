@@ -16,7 +16,7 @@ namespace VTuberMusicBoxBackend.Models.Database
         /// <summary>
         /// string = VideoId, int = Position
         /// </summary>
-        [JsonProperty("video_id_list")]
-        public Dictionary<string, ushort> VideoIdList { get; set; } = new Dictionary<string, ushort>();
+        [JsonProperty("video_id")]
+        public Dictionary<string, ushort> VideoIdList { get; set; } = new();
     }
 }

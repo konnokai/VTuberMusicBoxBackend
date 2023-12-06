@@ -27,7 +27,7 @@ namespace VTuberMusicBoxBackend.Models.Database
                 .Property(x => x.VideoIdList)
                 .HasConversion(new ValueConverter<Dictionary<string, ushort>, string>(
                     v => JsonConvert.SerializeObject(v),
-                    v => JsonConvert.DeserializeObject<Dictionary<string, ushort>>(v)!))
+                    v => JsonConvert.DeserializeObject<Dictionary<string, ushort>>(v)))
                 .Metadata.SetValueComparer(dicValueComparer);
         }
     }
