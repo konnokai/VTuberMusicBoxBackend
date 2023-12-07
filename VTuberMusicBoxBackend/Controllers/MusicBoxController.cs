@@ -32,10 +32,10 @@ namespace VTuberMusicBoxBackend.Controllers
             // https://learn.microsoft.com/zh-tw/ef/core/querying/single-split-queries
             var userData = await _mainContext.User
                 .Include((x) => x.TrackList)
-                .Include((x) => x.CategorieList)
+                .Include((x) => x.CategoryList)
                 .AsNoTracking()
                 .AsSplitQuery() // 不確定這兩行會不會提升 SQL 執行速度 :thinking:
-                .Select((x) => new { x.DiscordId, x.TrackList, x.CategorieList })
+                .Select((x) => new { x.DiscordId, x.TrackList, x.CategoryList })
                 .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
 
             // 原則上不會發生但還是寫一下保險
@@ -46,7 +46,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 new
                 {
                     track_list = userData?.TrackList,
-                    categorie_list = userData?.CategorieList
+                    categorie_list = userData?.CategoryList
                 }).ToContentResult();
         }
 
@@ -92,18 +92,18 @@ namespace VTuberMusicBoxBackend.Controllers
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var userData = await _mainContext.User
-                .Include((x) => x.CategorieList)
+                .Include((x) => x.CategoryList)
                 .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
 
             if (userData == null)
                 return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
 
             Category result;
-            var userCategory = userData.CategorieList.SingleOrDefault((x) => x.Name == categorie.Name);
+            var userCategory = userData.CategoryList.SingleOrDefault((x) => x.Name == categorie.Name);
             if (userCategory == null)
             {
                 result = new Category() { Name = categorie.Name, Position = categorie.Position };
-                userData.CategorieList.Add(result);
+                userData.CategoryList.Add(result);
                 await _mainContext.SaveChangesAsync();
             }
             else
@@ -114,35 +114,30 @@ namespace VTuberMusicBoxBackend.Controllers
             return new APIResult(HttpStatusCode.Created, result).ToContentResult();
         }
 
-
         [HttpPost]
         [EnableCors("allowPOST")]
-        public async Task<ContentResult> SetTrackCategorie([FromBody] SetTrackCategorie setTrackCategorie)
+        public async Task<ContentResult> SetCategoryData([FromBody] SetCategoryData setCategoryData)
         {
-            if (setTrackCategorie.Position <= 0)
-                return new APIResult(HttpStatusCode.BadRequest, "Position 不可小於等於0").ToContentResult();
-
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (setCategoryData.VideoAndPosition.Values.GroupBy((x) => x).Any((x) => x.Count() > 1))
+                return new APIResult(HttpStatusCode.BadRequest, "Position 不可重複").ToContentResult();
 
             // ChatGPT: 可以考慮使用 AsNoTracking 來取消追蹤，然後再重新 Update 實體。
             // 這樣可以確保 EF Core 不會追蹤這些實體，並且在更新時直接將它們視為修改的實體。
             var userData = await _mainContext.User
                 .AsNoTracking()
-                .Include((x) => x.CategorieList)
+                .Include((x) => x.CategoryList)
                 .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
 
             if (userData == null)
                 return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
 
-            var userCategory = userData.CategorieList.SingleOrDefault((x) => x.Guid == setTrackCategorie.CategorieGuId);
+            var userCategory = userData.CategoryList.SingleOrDefault((x) => x.Guid == setCategoryData.Guid);
             if (userCategory == null)
                 return new APIResult(HttpStatusCode.BadRequest, "查無分類").ToContentResult();
 
-            if (userCategory.VideoIdList.ContainsKey(setTrackCategorie.VideoId))
-                userCategory.VideoIdList[setTrackCategorie.VideoId] = setTrackCategorie.Position;
-            else
-                userCategory.VideoIdList.Add(setTrackCategorie.VideoId, setTrackCategorie.Position);
-
+            userCategory.VideoIdList = setCategoryData.VideoAndPosition;
             _mainContext.User.Update(userData);
             await _mainContext.SaveChangesAsync();
 

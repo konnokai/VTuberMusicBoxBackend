@@ -28,18 +28,21 @@ namespace VTuberMusicBoxBackend
                 options.UseMemberCasing();
             });
 
-            try
+            if (!IsRunningOnMigrationCommand())
             {
-                RedisConnection.Init(Configuration.GetConnectionString("RedisConnection")!);
-                Utility.Redis = RedisConnection.Instance.ConnectionMultiplexer;
-                Utility.RedisDb = Utility.Redis.GetDatabase(2);
+                try
+                {
+                    RedisConnection.Init(Configuration.GetConnectionString("RedisConnection")!);
+                    Utility.Redis = RedisConnection.Instance.ConnectionMultiplexer;
+                    Utility.RedisDb = Utility.Redis.GetDatabase(2);
 
-                _logger.Info("Redis已連線");
-            }
-            catch (Exception exception)
-            {
-                _logger.Error(exception, "Redis連線錯誤，請確認伺服器是否已開啟\r\n");
-                return;
+                    _logger.Info("Redis已連線");
+                }
+                catch (Exception exception)
+                {
+                    _logger.Error(exception, "Redis連線錯誤，請確認伺服器是否已開啟\r\n");
+                    return;
+                }
             }
 
             // https://medium.com/selectprogram/asp-net-core%E4%BD%BF%E7%94%A8jwt%E9%A9%97%E8%AD%89-1b0609e6e8e3
@@ -141,5 +144,8 @@ namespace VTuberMusicBoxBackend
 
             _logger.Info("初始化完成");
         }
+
+        static bool IsRunningOnMigrationCommand()
+            => Environment.GetCommandLineArgs().Any((x) => x == "migrations");
     }
 }

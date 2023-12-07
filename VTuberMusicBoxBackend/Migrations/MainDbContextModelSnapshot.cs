@@ -98,7 +98,7 @@ namespace VTuberMusicBoxBackend.Migrations
             modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.Category", b =>
                 {
                     b.HasOne("VTuberMusicBoxBackend.Models.Database.User", null)
-                        .WithMany("CategorieList")
+                        .WithMany("CategoryList")
                         .HasForeignKey("UserDiscordId");
                 });
 
@@ -111,7 +111,7 @@ namespace VTuberMusicBoxBackend.Migrations
 
             modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.User", b =>
                 {
-                    b.Navigation("CategorieList");
+                    b.Navigation("CategoryList");
 
                     b.Navigation("TrackList");
                 });
