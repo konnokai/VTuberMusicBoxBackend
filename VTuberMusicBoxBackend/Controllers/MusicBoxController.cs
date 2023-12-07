@@ -120,6 +120,7 @@ namespace VTuberMusicBoxBackend.Controllers
         {
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            // https://stackoverflow.com/a/18547390
             if (setCategoryData.VideoAndPosition.Values.GroupBy((x) => x).Any((x) => x.Count() > 1))
                 return new APIResult(HttpStatusCode.BadRequest, "Position 不可重複").ToContentResult();
 
