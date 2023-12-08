@@ -4,6 +4,9 @@ namespace VTuberMusicBoxBackend.Models.Database
 {
     public class Track : DbEntity
     {
+        [JsonIgnore]
+        public string DiscordUserId { get; set; } = string.Empty;
+
         [JsonProperty("video_id")]
         public string VideoId { get; set; } = "";
 

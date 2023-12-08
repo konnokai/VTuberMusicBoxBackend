@@ -113,12 +113,6 @@ namespace VTuberMusicBoxBackend.Controllers
                     return new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
-                if (!await _mainContext.User.AsNoTracking().AnyAsync((x) => x.DiscordId == discordUser.Id))
-                {
-                    _mainContext.User.Add(new User() { DiscordId = discordUser.Id, CategoryList = new List<Category>() { new() { Name = "FavoriteTrack", Position = 0 } } });
-                    await _mainContext.SaveChangesAsync();
-                }
-
                 string token = "";
                 try
                 {

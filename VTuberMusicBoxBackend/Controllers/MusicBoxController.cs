@@ -25,29 +25,14 @@ namespace VTuberMusicBoxBackend.Controllers
 
         [HttpGet]
         [EnableCors("allowGET")]
-        public async Task<ContentResult> GetUserData()
+        public ContentResult GetUserData()
         {
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // https://learn.microsoft.com/zh-tw/ef/core/querying/single-split-queries
-            var userData = await _mainContext.User
-                .Include((x) => x.TrackList)
-                .Include((x) => x.CategoryList)
-                .AsNoTracking()
-                .AsSplitQuery() // 不確定這兩行會不會提升 SQL 執行速度 :thinking:
-                .Select((x) => new { x.DiscordId, x.TrackList, x.CategoryList })
-                .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
+            var tracks = _mainContext.Track.Where((x) => x.DiscordUserId == discordUserId);
+            var categories = _mainContext.Category.Where((x) => x.DiscordUserId == discordUserId);
 
-            // 原則上不會發生但還是寫一下保險
-            if (userData == null)
-                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
-
-            return new APIResult(HttpStatusCode.OK,
-                new
-                {
-                    track_list = userData?.TrackList,
-                    categorie_list = userData?.CategoryList
-                }).ToContentResult();
+            return new APIResult(HttpStatusCode.OK, new { tracks, categories }).ToContentResult();
         }
 
         [HttpPost]
@@ -59,24 +44,17 @@ namespace VTuberMusicBoxBackend.Controllers
 
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var userData = await _mainContext.User
-                .Include((x) => x.TrackList)
-                .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
-
-            if (userData == null)
-                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
-
             var resultCode = HttpStatusCode.Created;
-            var userTrack = userData.TrackList.SingleOrDefault((x) => x.VideoId == track.VideoId);
+            var userTrack = await _mainContext.Track.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.VideoId == track.VideoId);
             if (userTrack == null)
             {
-                userData.TrackList.Add(new Track() { VideoId = track.VideoId, StartAt = track.StartAt, EndAt = track.EndAt });
+                _mainContext.Track.Add(new Track() { DiscordUserId = discordUserId, VideoId = track.VideoId, StartAt = track.StartAt, EndAt = track.EndAt });
             }
             else
             {
                 userTrack.StartAt = track.StartAt;
                 userTrack.EndAt = track.EndAt;
-                _mainContext.User.Update(userData);
+                _mainContext.Track.Update(userTrack);
                 resultCode = HttpStatusCode.NoContent;
             }
 
@@ -87,23 +65,16 @@ namespace VTuberMusicBoxBackend.Controllers
 
         [HttpPost]
         [EnableCors("allowPOST")]
-        public async Task<ContentResult> AddCategorie([FromBody] AddCategorie categorie)
+        public async Task<ContentResult> AddCategory([FromBody] AddCategory category)
         {
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var userData = await _mainContext.User
-                .Include((x) => x.CategoryList)
-                .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
-
-            if (userData == null)
-                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
-
             Category result;
-            var userCategory = userData.CategoryList.SingleOrDefault((x) => x.Name == categorie.Name);
+            var userCategory = await _mainContext.Category.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Name == category.Name);
             if (userCategory == null)
             {
-                result = new Category() { Name = categorie.Name, Position = categorie.Position };
-                userData.CategoryList.Add(result);
+                result = new Category() { DiscordUserId = discordUserId, Name = category.Name, Position = category.Position };
+                _mainContext.Category.Add(result);
                 await _mainContext.SaveChangesAsync();
             }
             else
@@ -124,22 +95,12 @@ namespace VTuberMusicBoxBackend.Controllers
             if (setCategoryData.VideoAndPosition.Values.GroupBy((x) => x).Any((x) => x.Count() > 1))
                 return new APIResult(HttpStatusCode.BadRequest, "Position 不可重複").ToContentResult();
 
-            // ChatGPT: 可以考慮使用 AsNoTracking 來取消追蹤，然後再重新 Update 實體。
-            // 這樣可以確保 EF Core 不會追蹤這些實體，並且在更新時直接將它們視為修改的實體。
-            var userData = await _mainContext.User
-                .AsNoTracking()
-                .Include((x) => x.CategoryList)
-                .SingleOrDefaultAsync((x) => x.DiscordId == discordUserId);
-
-            if (userData == null)
-                return new APIResult(HttpStatusCode.BadRequest, "無此使用者資料，請重新登入").ToContentResult();
-
-            var userCategory = userData.CategoryList.SingleOrDefault((x) => x.Guid == setCategoryData.Guid);
+            var userCategory = await _mainContext.Category.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Guid == setCategoryData.Guid);
             if (userCategory == null)
                 return new APIResult(HttpStatusCode.BadRequest, "查無分類").ToContentResult();
 
             userCategory.VideoIdList = setCategoryData.VideoAndPosition;
-            _mainContext.User.Update(userData);
+            _mainContext.Category.Update(userCategory);
             await _mainContext.SaveChangesAsync();
 
             return new APIResult(HttpStatusCode.OK, userCategory).ToContentResult();

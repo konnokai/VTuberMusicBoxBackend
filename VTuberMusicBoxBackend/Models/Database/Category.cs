@@ -4,6 +4,9 @@ namespace VTuberMusicBoxBackend.Models.Database
 {
     public class Category : DbEntity
     {
+        [JsonIgnore]
+        public string DiscordUserId { get; set; } = string.Empty;
+
         [JsonProperty("guid")]
         public string Guid { get; set; } = System.Guid.NewGuid().ToString();
 

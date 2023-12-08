@@ -9,7 +9,8 @@ namespace VTuberMusicBoxBackend.Models.Database
 {
     public class MainDbContext : DbContext
     {
-        public DbSet<User> User { get; set; }
+        public DbSet<Category> Category { get; set; }
+        public DbSet<Track> Track { get; set; }
 
         public MainDbContext(DbContextOptions<MainDbContext> options) : base(options) { }
 

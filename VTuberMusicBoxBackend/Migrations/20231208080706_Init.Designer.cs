@@ -11,7 +11,7 @@ using VTuberMusicBoxBackend.Models.Database;
 namespace VTuberMusicBoxBackend.Migrations
 {
     [DbContext(typeof(MainDbContext))]
-    [Migration("20231207033644_Init")]
+    [Migration("20231208080706_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -31,6 +31,10 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("DiscordUserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Guid")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -42,16 +46,11 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.Property<ushort>("Position")
                         .HasColumnType("smallint unsigned");
 
-                    b.Property<string>("UserDiscordId")
-                        .HasColumnType("varchar(255)");
-
                     b.Property<string>("VideoIdList")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserDiscordId");
 
                     b.ToTable("Category");
                 });
@@ -65,14 +64,15 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("DiscordUserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<ushort>("EndAt")
                         .HasColumnType("smallint unsigned");
 
                     b.Property<ushort>("StartAt")
                         .HasColumnType("smallint unsigned");
-
-                    b.Property<string>("UserDiscordId")
-                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("VideoId")
                         .IsRequired()
@@ -80,43 +80,7 @@ namespace VTuberMusicBoxBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserDiscordId");
-
                     b.ToTable("Track");
-                });
-
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.User", b =>
-                {
-                    b.Property<string>("DiscordId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime?>("DateAdded")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("DiscordId");
-
-                    b.ToTable("User");
-                });
-
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.Category", b =>
-                {
-                    b.HasOne("VTuberMusicBoxBackend.Models.Database.User", null)
-                        .WithMany("CategoryList")
-                        .HasForeignKey("UserDiscordId");
-                });
-
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.Track", b =>
-                {
-                    b.HasOne("VTuberMusicBoxBackend.Models.Database.User", null)
-                        .WithMany("TrackList")
-                        .HasForeignKey("UserDiscordId");
-                });
-
-            modelBuilder.Entity("VTuberMusicBoxBackend.Models.Database.User", b =>
-                {
-                    b.Navigation("CategoryList");
-
-                    b.Navigation("TrackList");
                 });
 #pragma warning restore 612, 618
         }

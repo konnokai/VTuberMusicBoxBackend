@@ -2,7 +2,7 @@
 
 namespace VTuberMusicBoxBackend.Models.Requests
 {
-    public class AddCategorie
+    public class AddCategory
     {
         [JsonProperty("name")]
         public string Name { get; set; } = "";
