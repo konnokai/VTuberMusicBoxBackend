@@ -19,8 +19,9 @@ using VTuberMusicBoxBackend.Models.DiscordOAuth;
 namespace VTuberMusicBoxBackend.Controllers
 {
     [AllowAnonymous]
-    [Route("[controller]/[action]")]
     [ApiController]
+    [Route("[controller]/[action]")]
+    [Produces("application/json")]
     public class DiscordController : Controller
     {
         private readonly ILogger<DiscordController> _logger;

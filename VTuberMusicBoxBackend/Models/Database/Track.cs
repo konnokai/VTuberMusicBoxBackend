@@ -7,13 +7,13 @@ namespace VTuberMusicBoxBackend.Models.Database
         [JsonIgnore]
         public string DiscordUserId { get; set; } = string.Empty;
 
-        [JsonProperty("video_id")]
+        [JsonProperty("videoId")]
         public string VideoId { get; set; } = "";
 
-        [JsonProperty("start_at")]
+        [JsonProperty("startAt")]
         public ushort StartAt { get; set; } = 0;
 
-        [JsonProperty("end_at")]
+        [JsonProperty("endAt")]
         public ushort EndAt { get; set; } = 0;
     }
 }

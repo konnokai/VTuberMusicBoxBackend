@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
+using System.Diagnostics;
 using System.Text;
 using VTuberMusicBoxBackend.Configs;
 using VTuberMusicBoxBackend.Models.Database;
@@ -121,6 +122,7 @@ namespace VTuberMusicBoxBackend
             });
 
             services.AddHttpClient();
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -134,6 +136,12 @@ namespace VTuberMusicBoxBackend
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            if (Debugger.IsAttached)
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
             app.UseEndpoints(endpoints =>
             {

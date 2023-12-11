@@ -6,8 +6,8 @@ using Newtonsoft.Json;
 namespace VTuberMusicBoxBackend.Controllers
 {
     [AllowAnonymous]
-    [Route("[action]")]
     [ApiController]
+    [Route("[action]")]
     public class StatusCheckController : Controller
     {
         [EnableCors("allowGET")]

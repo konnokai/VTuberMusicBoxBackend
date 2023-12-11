@@ -76,7 +76,7 @@ namespace VTuberMusicBoxBackend.Middleware
             {
                 _logger.Error(e, "LogMiddleware Error\r\n");
 
-                var result = new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤");
+                var result = new APIResult(HttpStatusCode.InternalServerError, "Internal Server Error");
                 var messageBytes = Encoding.UTF8.GetBytes(result.ToJson());
 
                 context.Response.StatusCode = result.Code;

@@ -1,12 +1,15 @@
 ﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
+
+#nullable disable
 
 namespace VTuberMusicBoxBackend.Models.Requests
 {
     public class AddCategory
     {
-        [JsonProperty("name")]
-        public string Name { get; set; } = "";
-        [JsonProperty("position")]
-        public ushort Position { get; set; } = 0;
+        [Required]
+        public string Name { get; set; }
+        [Required]
+        public ushort Position { get; set; }
     }
 }

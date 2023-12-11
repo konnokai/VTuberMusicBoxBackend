@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace VTuberMusicBoxBackend.Models.Requests
 {
     public class AddTrack
     {
-        [JsonProperty("video_id")]
+        [Required]
         public string VideoId { get; set; } = "";
-        [JsonProperty("start_at")]
+        [Required]
         public ushort StartAt { get; set; } = 0;
-        [JsonProperty("end_at")]
+        [Required]
         public ushort EndAt { get; set; } = 0;
     }
 }

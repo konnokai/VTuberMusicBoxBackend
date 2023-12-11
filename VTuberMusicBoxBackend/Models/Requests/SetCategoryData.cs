@@ -1,15 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿#nullable disable
 
-#nullable disable
+using System.ComponentModel.DataAnnotations;
 
 namespace VTuberMusicBoxBackend.Models.Requests
 {
-    public class SetCategoryData
+    public class SetCategoryTrack
     {
-        [JsonProperty("guid")]
+        [Required]
         public string Guid { get; set; }
 
-        [JsonProperty("video_and_position")]
+        [Required]
         public Dictionary<string, ushort> VideoAndPosition { get; set; }
     }
 }
