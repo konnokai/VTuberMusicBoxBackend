@@ -2,8 +2,10 @@
 
 namespace VTuberMusicBoxBackend.Models.Requests
 {
-    public class AddTrack
+    public class SetTrack
     {
+        [Required]
+        public string Guid { get; set; } = "";
         [Required]
         public string VideoId { get; set; } = "";
         [Required]

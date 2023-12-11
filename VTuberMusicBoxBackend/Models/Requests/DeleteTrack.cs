@@ -7,6 +7,6 @@ namespace VTuberMusicBoxBackend.Models.Requests
     public class DeleteTrack
     {
         [Required]
-        public string VideoId { get; set; }
+        public string Guid { get; set; }
     }
 }

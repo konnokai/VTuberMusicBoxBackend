@@ -46,43 +46,87 @@ namespace VTuberMusicBoxBackend.Controllers
             if (track.VideoId.Length != 11)
                 return new APIResult(HttpStatusCode.BadRequest, "Video Id 長度錯誤").ToContentResult();
 
+            if (string.IsNullOrEmpty(track.VideoTitle))
+                return new APIResult(HttpStatusCode.BadRequest, "Video Title 不可空白").ToContentResult();
+
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var resultCode = HttpStatusCode.Created;
-            var userTrack = await _mainContext.Track.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.VideoId == track.VideoId);
-            if (userTrack == null)
+            if (_mainContext.Track.AsNoTracking().Any((x) => x.DiscordUserId == discordUserId && x.VideoId == track.VideoId && x.StartAt == track.StartAt && x.EndAt == track.EndAt))
             {
-                _mainContext.Track.Add(new Track() { DiscordUserId = discordUserId, VideoId = track.VideoId, StartAt = track.StartAt, EndAt = track.EndAt });
+                return new APIResult(HttpStatusCode.BadRequest, "不可重複加入相同的歌曲").ToContentResult();
             }
             else
             {
+                var userTrack = new Track()
+                {
+                    DiscordUserId = discordUserId,
+                    VideoId = track.VideoId,
+                    StartAt = track.StartAt,
+                    EndAt = track.EndAt,
+                    VideoTitle = track.VideoTitle,
+                    Artist = track.Artist,
+                    TrackTitle = track.TrackTitle
+                };
+
+                _mainContext.Track.Add(userTrack);
+                await _mainContext.SaveChangesAsync();
+
+                return new APIResult(HttpStatusCode.OK, new { guid = userTrack.Guid }).ToContentResult();
+            }
+        }
+
+        [HttpPost]
+        [EnableCors("allowPOST")]
+        public async Task<ContentResult> SetTrack([FromBody] SetTrack track)
+        {
+            if (string.IsNullOrEmpty(track.Guid))
+                return new APIResult(HttpStatusCode.BadRequest, "Guid 不可空白").ToContentResult();
+
+            if (track.StartAt > track.EndAt)
+                return new APIResult(HttpStatusCode.BadRequest, "開始時間不可大於結束時間").ToContentResult();
+
+            if (track.VideoId.Length != 11)
+                return new APIResult(HttpStatusCode.BadRequest, "Video Id 長度錯誤").ToContentResult();
+
+            if (string.IsNullOrEmpty(track.VideoTitle))
+                return new APIResult(HttpStatusCode.BadRequest, "Video Title 不可空白").ToContentResult();
+
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var userTrack = await _mainContext.Track.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Guid == track.Guid);
+            if (userTrack == null)
+            {
+                return new APIResult(HttpStatusCode.NotFound, "找不到歌曲").ToContentResult();
+            }
+            else
+            {
+                userTrack.VideoId = track.VideoId;
+                userTrack.VideoTitle = track.VideoTitle;
                 userTrack.StartAt = track.StartAt;
                 userTrack.EndAt = track.EndAt;
+                userTrack.Artist = track.Artist;
+                userTrack.TrackTitle = track.TrackTitle;
+
                 _mainContext.Track.Update(userTrack);
-                resultCode = HttpStatusCode.NoContent;
+                await _mainContext.SaveChangesAsync();
+
+                return new APIResult(HttpStatusCode.NoContent).ToContentResult();
             }
-
-            await _mainContext.SaveChangesAsync();
-
-            return new APIResult(resultCode).ToContentResult();
         }
 
         [HttpDelete]
         [EnableCors("allowDELETE")]
         public async Task<ContentResult> DeleteTrack([FromBody] DeleteTrack track)
         {
-            if (string.IsNullOrEmpty(track.VideoId))
-                return new APIResult(HttpStatusCode.BadRequest, "Video Id 不可空白").ToContentResult();
-
-            if (track.VideoId.Length != 11)
-                return new APIResult(HttpStatusCode.BadRequest, "Video Id 長度錯誤").ToContentResult();
+            if (string.IsNullOrEmpty(track.Guid))
+                return new APIResult(HttpStatusCode.BadRequest, "Guid 不可空白").ToContentResult();
 
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var userTrack = await _mainContext.Track.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.VideoId == track.VideoId);
+            var userTrack = await _mainContext.Track.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Guid == track.Guid);
             if (userTrack == null)
             {
-                return new APIResult(HttpStatusCode.NotFound, "Video Id 不存在").ToContentResult();
+                return new APIResult(HttpStatusCode.NotFound, "Guid 不存在").ToContentResult();
             }
             else
             {
@@ -121,7 +165,7 @@ namespace VTuberMusicBoxBackend.Controllers
                 return new APIResult(HttpStatusCode.BadRequest, "已存在同名分類").ToContentResult();
             }
 
-            return new APIResult(HttpStatusCode.Created, result).ToContentResult();
+            return new APIResult(HttpStatusCode.Created, new { guid = result.Guid }).ToContentResult();
         }
 
         [HttpDelete]
@@ -151,11 +195,17 @@ namespace VTuberMusicBoxBackend.Controllers
         [EnableCors("allowPOST")]
         public async Task<ContentResult> SetCategoryTrack([FromBody] SetCategoryTrack setCategoryTrack)
         {
-            if (setCategoryTrack.VideoAndPosition == null)
-                return new APIResult(HttpStatusCode.BadRequest).ToContentResult();
+            if (string.IsNullOrEmpty(setCategoryTrack.Guid))
+                return new APIResult(HttpStatusCode.BadRequest, "Guid 不可空白").ToContentResult();
+
+            if (setCategoryTrack.Guid.Length != 36)
+                return new APIResult(HttpStatusCode.BadRequest, "Guid 長度錯誤").ToContentResult();
+
+            if (setCategoryTrack.TrackGuidAndPosition == null)
+                return new APIResult(HttpStatusCode.BadRequest, "TrackGuidAndPosition 不可空白").ToContentResult();
 
             // https://stackoverflow.com/a/18547390
-            if (setCategoryTrack.VideoAndPosition.Values.GroupBy((x) => x).Any((x) => x.Count() > 1))
+            if (setCategoryTrack.TrackGuidAndPosition.Values.GroupBy((x) => x).Any((x) => x.Count() > 1))
                 return new APIResult(HttpStatusCode.BadRequest, "Position 不可重複").ToContentResult();
 
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -164,18 +214,18 @@ namespace VTuberMusicBoxBackend.Controllers
             if (userCategory == null)
                 return new APIResult(HttpStatusCode.NotFound, "查無分類").ToContentResult();
 
-            // 檢測 VideoId 是否為 11 字元
-            foreach (var item in setCategoryTrack.VideoAndPosition.Keys)
+            // 檢測 Guid 是否為 36 字元
+            foreach (var item in setCategoryTrack.TrackGuidAndPosition.Keys)
             {
-                if (item.Length != 11)
-                    setCategoryTrack.VideoAndPosition.Remove(item);
+                if (item.Length != 36)
+                    setCategoryTrack.TrackGuidAndPosition.Remove(item);
             }
 
-            userCategory.VideoIdList = setCategoryTrack.VideoAndPosition;
+            userCategory.VideoIdList = setCategoryTrack.TrackGuidAndPosition;
             _mainContext.Category.Update(userCategory);
             await _mainContext.SaveChangesAsync();
 
-            return new APIResult(HttpStatusCode.OK, setCategoryTrack.VideoAndPosition.Count).ToContentResult();
+            return new APIResult(HttpStatusCode.OK, setCategoryTrack.TrackGuidAndPosition.Count).ToContentResult();
         }
 
         [HttpPost]

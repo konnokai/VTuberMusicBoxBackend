@@ -10,6 +10,6 @@ namespace VTuberMusicBoxBackend.Models.Requests
         public string Guid { get; set; }
 
         [Required]
-        public Dictionary<string, ushort> VideoAndPosition { get; set; }
+        public Dictionary<string, ushort> TrackGuidAndPosition { get; set; }
     }
 }
