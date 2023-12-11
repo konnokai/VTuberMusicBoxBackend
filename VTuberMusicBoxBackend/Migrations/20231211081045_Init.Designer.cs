@@ -11,7 +11,7 @@ using VTuberMusicBoxBackend.Models.Database;
 namespace VTuberMusicBoxBackend.Migrations
 {
     [DbContext(typeof(MainDbContext))]
-    [Migration("20231208080706_Init")]
+    [Migration("20231211081045_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -61,6 +61,10 @@ namespace VTuberMusicBoxBackend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<string>("Artist")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("DateAdded")
                         .HasColumnType("datetime(6)");
 
@@ -71,10 +75,25 @@ namespace VTuberMusicBoxBackend.Migrations
                     b.Property<ushort>("EndAt")
                         .HasColumnType("smallint unsigned");
 
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<ushort>("StartAt")
                         .HasColumnType("smallint unsigned");
 
+                    b.Property<string>("TrackTitle")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("Unplayable")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("VideoId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("VideoTitle")
                         .IsRequired()
                         .HasColumnType("longtext");
 
