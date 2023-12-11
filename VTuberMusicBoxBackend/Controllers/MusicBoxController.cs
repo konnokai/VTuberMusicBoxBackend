@@ -43,6 +43,9 @@ namespace VTuberMusicBoxBackend.Controllers
             if (track.StartAt > track.EndAt)
                 return new APIResult(HttpStatusCode.BadRequest, "開始時間不可大於結束時間").ToContentResult();
 
+            if (track.VideoId.Length != 11)
+                return new APIResult(HttpStatusCode.BadRequest, "Video Id 長度錯誤").ToContentResult();
+
             string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var resultCode = HttpStatusCode.Created;
@@ -68,8 +71,6 @@ namespace VTuberMusicBoxBackend.Controllers
         [EnableCors("allowPOST")]
         public async Task<ContentResult> AddCategory([FromBody] AddCategory category)
         {
-            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(category.Name))
                 return new APIResult(HttpStatusCode.BadRequest, "Name 不可空白").ToContentResult();
 
@@ -78,6 +79,8 @@ namespace VTuberMusicBoxBackend.Controllers
 
             if (_mainContext.Category.AsNoTracking().Any((x) => x.Position == category.Position))
                 return new APIResult(HttpStatusCode.BadRequest, "Position 不可跟其他分類重複").ToContentResult();
+
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             Category result;
             var userCategory = await _mainContext.Category.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Name == category.Name);
@@ -99,8 +102,6 @@ namespace VTuberMusicBoxBackend.Controllers
         [EnableCors("allowPOST")]
         public async Task<ContentResult> SetCategoryTrack([FromBody] SetCategoryTrack setCategoryTrack)
         {
-            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (setCategoryTrack.VideoAndPosition == null)
                 return new APIResult(HttpStatusCode.BadRequest).ToContentResult();
 
@@ -108,15 +109,24 @@ namespace VTuberMusicBoxBackend.Controllers
             if (setCategoryTrack.VideoAndPosition.Values.GroupBy((x) => x).Any((x) => x.Count() > 1))
                 return new APIResult(HttpStatusCode.BadRequest, "Position 不可重複").ToContentResult();
 
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             var userCategory = await _mainContext.Category.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Guid == setCategoryTrack.Guid);
             if (userCategory == null)
                 return new APIResult(HttpStatusCode.BadRequest, "查無分類").ToContentResult();
+
+            // 檢測 VideoId 是否為 11 字元
+            foreach (var item in setCategoryTrack.VideoAndPosition.Keys)
+            {
+                if (item.Length != 11)
+                    setCategoryTrack.VideoAndPosition.Remove(item);
+            }
 
             userCategory.VideoIdList = setCategoryTrack.VideoAndPosition;
             _mainContext.Category.Update(userCategory);
             await _mainContext.SaveChangesAsync();
 
-            return new APIResult(HttpStatusCode.OK, userCategory).ToContentResult();
+            return new APIResult(HttpStatusCode.OK, setCategoryTrack.VideoAndPosition.Count).ToContentResult();
         }
 
 
@@ -124,14 +134,14 @@ namespace VTuberMusicBoxBackend.Controllers
         [EnableCors("allowPOST")]
         public async Task<ContentResult> SetCategoriesPosition([FromBody] SetCategoriesPosition setCategoriesPosition)
         {
-            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
             if (setCategoriesPosition.GuidAndPosition == null)
                 return new APIResult(HttpStatusCode.BadRequest).ToContentResult();
 
             // https://stackoverflow.com/a/18547390
             if (setCategoriesPosition.GuidAndPosition.Values.GroupBy((x) => x).Any((x) => x.Count() > 1))
                 return new APIResult(HttpStatusCode.BadRequest, "Position 不可重複").ToContentResult();
+
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var userCategories = _mainContext.Category.Where((x) => x.DiscordUserId == discordUserId);
             if (!userCategories.Any())
