@@ -129,7 +129,6 @@ namespace VTuberMusicBoxBackend.Controllers
             return new APIResult(HttpStatusCode.OK, setCategoryTrack.VideoAndPosition.Count).ToContentResult();
         }
 
-
         [HttpPost]
         [EnableCors("allowPOST")]
         public async Task<ContentResult> SetCategoriesPosition([FromBody] SetCategoriesPosition setCategoriesPosition)
@@ -160,6 +159,7 @@ namespace VTuberMusicBoxBackend.Controllers
             }
 
             await _mainContext.SaveChangesAsync();
+
             return new APIResult(HttpStatusCode.OK, result).ToContentResult();
         }
     }
