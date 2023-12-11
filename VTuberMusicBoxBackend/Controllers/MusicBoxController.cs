@@ -67,6 +67,32 @@ namespace VTuberMusicBoxBackend.Controllers
             return new APIResult(resultCode).ToContentResult();
         }
 
+        [HttpDelete]
+        [EnableCors("allowDELETE")]
+        public async Task<ContentResult> DeleteTrack([FromBody] DeleteTrack track)
+        {
+            if (string.IsNullOrEmpty(track.VideoId))
+                return new APIResult(HttpStatusCode.BadRequest, "Video Id 不可空白").ToContentResult();
+
+            if (track.VideoId.Length != 11)
+                return new APIResult(HttpStatusCode.BadRequest, "Video Id 長度錯誤").ToContentResult();
+
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var userTrack = await _mainContext.Track.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.VideoId == track.VideoId);
+            if (userTrack == null)
+            {
+                return new APIResult(HttpStatusCode.NotFound, "Video Id 不存在").ToContentResult();
+            }
+            else
+            {
+                _mainContext.Track.Remove(userTrack);
+                await _mainContext.SaveChangesAsync();
+            }
+
+            return new APIResult(HttpStatusCode.NoContent).ToContentResult();
+        }
+
         [HttpPost]
         [EnableCors("allowPOST")]
         public async Task<ContentResult> AddCategory([FromBody] AddCategory category)
@@ -98,6 +124,29 @@ namespace VTuberMusicBoxBackend.Controllers
             return new APIResult(HttpStatusCode.Created, result).ToContentResult();
         }
 
+        [HttpDelete]
+        [EnableCors("allowDELETE")]
+        public async Task<ContentResult> DeleteCategory([FromBody] DeleteCategory category)
+        {
+            if (string.IsNullOrEmpty(category.Guid))
+                return new APIResult(HttpStatusCode.BadRequest, "Guid 不可空白").ToContentResult();
+
+            string discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var userCategory = await _mainContext.Category.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Guid == category.Guid);
+            if (userCategory == null)
+            {
+                return new APIResult(HttpStatusCode.NotFound, "Guid 不存在").ToContentResult();
+            }
+            else
+            {
+                _mainContext.Category.Remove(userCategory);
+                await _mainContext.SaveChangesAsync();
+            }
+
+            return new APIResult(HttpStatusCode.NoContent).ToContentResult();
+        }
+
         [HttpPost]
         [EnableCors("allowPOST")]
         public async Task<ContentResult> SetCategoryTrack([FromBody] SetCategoryTrack setCategoryTrack)
@@ -113,7 +162,7 @@ namespace VTuberMusicBoxBackend.Controllers
 
             var userCategory = await _mainContext.Category.SingleOrDefaultAsync((x) => x.DiscordUserId == discordUserId && x.Guid == setCategoryTrack.Guid);
             if (userCategory == null)
-                return new APIResult(HttpStatusCode.BadRequest, "查無分類").ToContentResult();
+                return new APIResult(HttpStatusCode.NotFound, "查無分類").ToContentResult();
 
             // 檢測 VideoId 是否為 11 字元
             foreach (var item in setCategoryTrack.VideoAndPosition.Keys)
@@ -144,7 +193,7 @@ namespace VTuberMusicBoxBackend.Controllers
 
             var userCategories = _mainContext.Category.Where((x) => x.DiscordUserId == discordUserId);
             if (!userCategories.Any())
-                return new APIResult(HttpStatusCode.BadRequest, "無任何分類").ToContentResult();
+                return new APIResult(HttpStatusCode.NotFound, "使用者無任何分類").ToContentResult();
 
             int result = 0;
             foreach (var item in setCategoriesPosition.GuidAndPosition)

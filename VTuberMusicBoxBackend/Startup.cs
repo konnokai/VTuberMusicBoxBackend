@@ -112,6 +112,12 @@ namespace VTuberMusicBoxBackend
                            .WithMethods("POST")
                            .WithHeaders("Content-Type");
                 });
+                options.AddPolicy(name: "allowDELETE", builder =>
+                {
+                    builder.WithOrigins($"{hostUri.Scheme}://{hostUri.Authority}")
+                           .WithMethods("DELETE")
+                           .WithHeaders("Content-Type");
+                });
             });
 
             services.AddAuthentication("Bearer");
