@@ -3,6 +3,7 @@ using NLog;
 using StackExchange.Redis;
 using System.Diagnostics;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 
 namespace VTuberMusicBoxBackend.Middleware
@@ -61,7 +62,9 @@ namespace VTuberMusicBoxBackend.Middleware
                 if (route != null && route == "statuscheck" && context.Response.StatusCode == 200)
                     return;
 
-                _logger.Info($"{remoteIpAddress} | {context.Request.Method} | {context.Response.StatusCode} | {requestUrl}");
+                string discordUserId = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "Anonymous";
+
+                _logger.Info($"{remoteIpAddress} | {context.Request.Method} | {context.Response.StatusCode} | {discordUserId} | {requestUrl}");
 
                 if (!isRedisError && !Debugger.IsAttached)
                 {
