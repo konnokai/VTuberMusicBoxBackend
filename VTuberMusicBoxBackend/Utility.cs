@@ -61,7 +61,7 @@ namespace VTuberMusicBoxBackend
             if (Code == (int)HttpStatusCode.NoContent)
                 return new ContentResult() { StatusCode = Code };
 
-            return new ContentResult() { StatusCode = Code, Content = JsonConvert.SerializeObject(this) };
+            return new ContentResult() { StatusCode = Code, Content = JsonConvert.SerializeObject(this), ContentType = "application/json" };
         }
 
         public string ToJson()
