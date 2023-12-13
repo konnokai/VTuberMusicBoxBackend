@@ -135,7 +135,6 @@ namespace VTuberMusicBoxBackend
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, MainDbContext dbContext)
         {
             app.UseMiddleware<Middleware.LogMiddleware>();
-            app.UseHttpsRedirection();
 
             app.UseRouting();
             app.UseCors();
