@@ -85,7 +85,7 @@ namespace VTuberMusicBoxBackend.Controllers
                     if (tokenData == null || tokenData.AccessToken == null)
                         return new APIResult(HttpStatusCode.Unauthorized, "認證錯誤，請重新登入 Discord").ToContentResult();
                 }
-                catch (HttpRequestException httpEx) when (httpEx.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                catch (HttpRequestException httpEx) when (httpEx.StatusCode == HttpStatusCode.BadRequest)
                 {
                     _logger.LogWarning("Discord Token 交換失敗: {Code}", code);
                     return new APIResult(HttpStatusCode.BadRequest, "請重新登入 Discord").ToContentResult();
@@ -124,7 +124,7 @@ namespace VTuberMusicBoxBackend.Controllers
                     return new APIResult(HttpStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContentResult();
                 }
 
-                return new APIResult(HttpStatusCode.OK, new { token, discord_data = discordUser }).ToContentResult();
+                return new APIResult(HttpStatusCode.OK, new { token, discordData = discordUser }).ToContentResult();
             }
             catch (Exception ex)
             {
